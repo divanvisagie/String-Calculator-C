@@ -3,31 +3,61 @@
 #include <setjmp.h>
 #include <stdint.h>
 #include <cmocka.h>
+#include <stdlib.h>
+#include <string.h>
 
-// Function under test from your src/main.c or some other source file
-int add(int a, int b) {
-    return a + b;
+char find_delim(char* input) {
+    char * indicator = strstr(input, "//");
+    if (indicator == NULL) {
+        return ',';
+    }
+    input = indicator + 2;
+    return indicator[2];
 }
 
-// A test case for the 'add' function
-static void test_addition(void **state) {
-    (void) state;  // unused variable
-    assert_int_equal(add(1, 1), 2);
-    assert_int_equal(add(0, 0), 0);
-    assert_int_equal(add(-1, -1), -2);
+int add(char* input) {
+    if (input == NULL || strcmp(input, "") == 0) {
+        return 0;
+    }
+    char *tofree, *string, *token;
+    int sum = 0;
+
+    tofree = string = strdup(input);
+    char delim = find_delim(input);
+    char* delims = malloc(sizeof(char) * 2);
+    delims[0] = delim;
+    delims[1] = '\n';
+
+    while ((token = strsep(&string, delims)) != NULL) {
+        sum += atoi(token);
+    }
+
+    free(tofree);
+    return sum;
 }
 
-// Another test case example
-static void test_subtraction(void **state) {
-    (void) state;  // unused variable
-    assert_int_equal(add(2, -1), 1);
+static void test_empty_input(void **state) {
+    assert_int_equal(add(""), 0);
 }
 
-// Group all test cases together
+static void test_add_with_comma(void **state) {
+    assert_int_equal(add("1,2"), 3);
+}
+
+static void test_add_with_comma_and_newline() {
+    assert_int_equal(add("1,2\n3"), 6);
+}
+
+static void test_add_with_newline_custom_delimiter() {
+    assert_int_equal(add("//;\n1;2"), 3);
+}
+
 int main(int argc, char *argv[]) {
     const struct CMUnitTest tests[] = {
-        cmocka_unit_test(test_addition),
-        cmocka_unit_test(test_subtraction),
+        cmocka_unit_test(test_empty_input),
+        cmocka_unit_test(test_add_with_comma),
+        cmocka_unit_test(test_add_with_comma_and_newline),
+        cmocka_unit_test(test_add_with_newline_custom_delimiter),
     };
     return cmocka_run_group_tests(tests, NULL, NULL);
 }

@@ -15,3 +15,10 @@ cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=YES .
 ```sh
 make run_tests
 ```
+To pull this template with git do a shallow clone and then detach the remote
+```sh
+git clone --depth 1
+git remote rm origin
+```
+You can now use your own remote
+

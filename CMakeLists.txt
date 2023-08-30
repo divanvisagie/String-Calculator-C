@@ -1,19 +1,29 @@
+# CMakeLists.txt
 cmake_minimum_required(VERSION 3.10)
 
-project(MyProject)
+# Project name and version
+project(StringCalculator VERSION 1.0)
 
-include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
-conan_basic_setup()
+# Set C standard
+set(CMAKE_C_STANDARD 99)
+set(CMAKE_C_STANDARD_REQUIRED True)
 
-# Specify the directories where the source files are located
-set(SOURCE_DIR "src")
-set(TEST_DIR "tests")
+# Locate the cmocka package
+find_package(cmocka CONFIG REQUIRED)
 
-# Define the executables
-add_executable(main_app ${SOURCE_DIR}/main.cpp)
-add_executable(test_app ${TEST_DIR}/test.cpp)
+# Include directories for main source code
+include_directories(${CMAKE_SOURCE_DIR}/src)
 
-# Link Conan libraries
-target_link_libraries(main_app ${CONAN_LIBS})
-target_link_libraries(test_app ${CONAN_LIBS})
+# Main application target
+add_executable(main_app src/main.c)
+
+# Test application target
+add_executable(test_app tests/test_main.c)
+target_link_libraries(test_app cmocka::cmocka)
+
+# Optionally, you can include a target to run the tests as part of the build process
+add_custom_target(run_tests
+    COMMAND test_app
+    DEPENDS test_app
+)
 

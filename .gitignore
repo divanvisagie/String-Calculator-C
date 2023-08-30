@@ -4,5 +4,6 @@ cmake_install.cmake
 main_app
 test_app
 CMakeCache.txt
-.cache
-.cmake
+.cache/
+.cmake/
+compile_commands.json

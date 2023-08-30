@@ -29,7 +29,11 @@ int add(char* input) {
     delims[1] = '\n';
 
     while ((token = strsep(&string, delims)) != NULL) {
-        sum += atoi(token);
+        int num = atoi(token);
+        if (num < 0) {
+            return -1;
+        }
+        sum += num;
     }
 
     free(tofree);
@@ -52,12 +56,21 @@ static void test_add_with_newline_custom_delimiter() {
     assert_int_equal(add("//;\n1;2"), 3);
 }
 
+static void test_add_negative_number_should_throw_exception() {
+    assert_int_equal(add("-2"), -1);
+}
+
+static void test_multi_character_delimiter() {
+    assert_int_equal(add("//***\n1***2***3"), 6);
+}
+    
 int main(int argc, char *argv[]) {
     const struct CMUnitTest tests[] = {
         cmocka_unit_test(test_empty_input),
         cmocka_unit_test(test_add_with_comma),
         cmocka_unit_test(test_add_with_comma_and_newline),
         cmocka_unit_test(test_add_with_newline_custom_delimiter),
+        cmocka_unit_test(test_add_negative_number_should_throw_exception),
     };
     return cmocka_run_group_tests(tests, NULL, NULL);
 }

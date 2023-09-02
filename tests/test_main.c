@@ -3,6 +3,7 @@
 #include <setjmp.h>
 #include <stdint.h>
 #include <cmocka.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -12,17 +13,9 @@ typedef struct {
     char* error;
 } DelimInfo;
 
-char find_delim(char* input) {
-    char *indicator = strstr(input, "//");
-    if (indicator == NULL) {
-        return ',';
-    }
-    input = indicator + 2;
-    return indicator[2];
-}
-
 DelimInfo find_delim_str(const char* input) {
-    DelimInfo info;
+    DelimInfo info = { .delim = NULL, .remaining = NULL, .error = NULL };
+
     char *local_input = strdup(input);
     
     char *indicator = strstr(local_input, "//");
@@ -37,8 +30,6 @@ DelimInfo find_delim_str(const char* input) {
     char *end = strstr(indicator + 2, "\n");
     
     if (end == NULL) {
-        info.delim = NULL;
-        info.remaining = NULL;
         info.error = "String starting with // indicates a delimiter but no newline was found";
         free(local_input);
         return info;
@@ -52,20 +43,56 @@ DelimInfo find_delim_str(const char* input) {
     return info;
 }
 
+void replace_string(char* str, const char* search, const char* replace) {
+    char* pos;
+    int search_len = strlen(search);
+    int replace_len = strlen(replace);
+
+    pos = strstr(str, search);
+
+    while (pos != NULL) {
+        memmove(pos + replace_len, pos + search_len, strlen(pos + search_len) + 1);
+        memcpy(pos, replace, replace_len);
+        pos = strstr(pos + replace_len, search);
+    }
+}
+
+/**
+ * Add function that takes a string of numbers and returns the sum of those numbers.
+ * 
+ * @param input_ptr - string of numbers to add
+ * @return sum of numbers
+ * @retval >= 0 - sum of numbers
+ * @retval -1 - negative number found
+ * @retval -2 - error finding delimiter
+ */
 int add(char* input_ptr) {
     if (input_ptr == NULL || strcmp(input_ptr, "") == 0) {
         return 0;
     }
-    char *tofree, *string, *token;
+
+    DelimInfo info = find_delim_str(input_ptr);
+    char* delims[] = {NULL};
+    delims[0] = info.delim;
+
+    if (info.error != NULL) {
+        printf("Error finding delim %s\n", info.error);
+        return -2;
+    }
+     
+    for (int i = 0; i < 1; i++) {
+        if (delims[i] == NULL) {
+            continue;
+        }
+        replace_string(info.remaining, delims[i], "\n");
+    }
+
     int sum = 0;
-
-    tofree = string = strdup(input_ptr);
-    char delim = find_delim(input_ptr);
-    char* delims = malloc(sizeof(char) * 2);
-    delims[0] = delim;
-    delims[1] = '\n';
-
-    while ((token = strsep(&string, delims)) != NULL) {
+    char *tofree, *string, *token;
+    // replace all string delims with newline character
+    string = strdup(info.remaining);
+    tofree = string;
+    while ((token = strsep(&string, "\n")) != NULL) {
         int num = atoi(token);
         if (num < 0) {
             return -1;
@@ -73,21 +100,32 @@ int add(char* input_ptr) {
         sum += num;
     }
 
-    free(tofree);
     return sum;
 }
 
-static void test_find_delim_single(void **state) {
-    char *input = "//;\n1;2";
-    char delim = find_delim(input);
-    assert_int_equal(delim, ';');
-}
 
 static void test_find_delim_str_single(void **state) {
     char* input = "//;\n1;2";
     DelimInfo di = find_delim_str(input);
     assert_string_equal(di.delim, ";");
     assert_string_equal(di.remaining, "1;2");
+    assert_null(di.error);
+}
+
+static void test_find_delim_str_no_delim(void **state) {
+    char* input = "1,2";
+    DelimInfo di = find_delim_str(input);
+    assert_string_equal(di.delim, ",");
+    assert_string_equal(di.remaining, "1,2");
+    assert_null(di.error);
+}
+
+static void test_find_delim_str_empty(void **state) {
+    char* input = "";
+    DelimInfo di = find_delim_str(input);
+    assert_string_equal(di.delim, ",");
+    assert_string_equal(di.remaining, "");
+    assert_null(di.error);
 }
 
 static void test_empty_input(void **state) {
@@ -116,8 +154,9 @@ static void test_multi_character_delimiter() {
     
 int main(int argc, char *argv[]) {
     const struct CMUnitTest tests[] = {
-        cmocka_unit_test(test_find_delim_single),
         cmocka_unit_test(test_find_delim_str_single),
+        cmocka_unit_test(test_find_delim_str_no_delim),
+        cmocka_unit_test(test_find_delim_str_empty),
         cmocka_unit_test(test_empty_input),
         cmocka_unit_test(test_add_with_comma),
         cmocka_unit_test(test_add_with_comma_and_newline),

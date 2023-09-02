@@ -1,8 +1,11 @@
 #ifndef DELIM_PARSER_H
 #define DELIM_PARSER_H
 
+#define MAX_DELIM 10
+
 typedef struct {
-    char* delim;
+    char* delim[MAX_DELIM];
+    int delim_count;
     char* remaining;
     char* error;
 } DelimInfo;

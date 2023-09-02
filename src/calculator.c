@@ -36,19 +36,17 @@ int add(char* input_ptr) {
     }
 
     DelimInfo info = find_delim_str(input_ptr);
-    char* delims[] = {NULL};
-    delims[0] = info.delim;
 
     if (info.error != NULL) {
         printf("Error finding delim %s\n", info.error);
         return -2;
     }
      
-    for (int i = 0; i < 1; i++) {
-        if (delims[i] == NULL) {
+    for (int i = 0; i < info.delim_count; i++) {
+        if (info.delim[i] == NULL) {
             continue;
         }
-        replace_string(info.remaining, delims[i], "\n");
+        replace_string(info.remaining, info.delim[i], "\n");
     }
 
     int sum = 0;

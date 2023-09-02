@@ -6,8 +6,14 @@
 #include <stdlib.h>
 #include <string.h>
 
+typedef struct {
+    char* delim;
+    char* remaining;
+    char* error;
+} DelimInfo;
+
 char find_delim(char* input) {
-    char * indicator = strstr(input, "//");
+    char *indicator = strstr(input, "//");
     if (indicator == NULL) {
         return ',';
     }
@@ -15,15 +21,46 @@ char find_delim(char* input) {
     return indicator[2];
 }
 
-int add(char* input) {
-    if (input == NULL || strcmp(input, "") == 0) {
+DelimInfo find_delim_str(const char* input) {
+    DelimInfo info;
+    char *local_input = strdup(input);
+    
+    char *indicator = strstr(local_input, "//");
+    
+    if (indicator == NULL) {
+        info.delim = strdup(",");
+        info.remaining = strdup(input);
+        free(local_input);
+        return info;
+    }
+    
+    char *end = strstr(indicator + 2, "\n");
+    
+    if (end == NULL) {
+        info.delim = NULL;
+        info.remaining = NULL;
+        info.error = "String starting with // indicates a delimiter but no newline was found";
+        free(local_input);
+        return info;
+    }
+    
+    *end = '\0';
+    info.delim = strdup(indicator + 2);
+    info.remaining = strdup(end + 1);
+    
+    free(local_input);
+    return info;
+}
+
+int add(char* input_ptr) {
+    if (input_ptr == NULL || strcmp(input_ptr, "") == 0) {
         return 0;
     }
     char *tofree, *string, *token;
     int sum = 0;
 
-    tofree = string = strdup(input);
-    char delim = find_delim(input);
+    tofree = string = strdup(input_ptr);
+    char delim = find_delim(input_ptr);
     char* delims = malloc(sizeof(char) * 2);
     delims[0] = delim;
     delims[1] = '\n';
@@ -41,9 +78,16 @@ int add(char* input) {
 }
 
 static void test_find_delim_single(void **state) {
-    char* input = "//;\n1;2";
+    char *input = "//;\n1;2";
     char delim = find_delim(input);
     assert_int_equal(delim, ';');
+}
+
+static void test_find_delim_str_single(void **state) {
+    char* input = "//;\n1;2";
+    DelimInfo di = find_delim_str(input);
+    assert_string_equal(di.delim, ";");
+    assert_string_equal(di.remaining, "1;2");
 }
 
 static void test_empty_input(void **state) {
@@ -73,6 +117,7 @@ static void test_multi_character_delimiter() {
 int main(int argc, char *argv[]) {
     const struct CMUnitTest tests[] = {
         cmocka_unit_test(test_find_delim_single),
+        cmocka_unit_test(test_find_delim_str_single),
         cmocka_unit_test(test_empty_input),
         cmocka_unit_test(test_add_with_comma),
         cmocka_unit_test(test_add_with_comma_and_newline),

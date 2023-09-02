@@ -40,6 +40,12 @@ int add(char* input) {
     return sum;
 }
 
+static void test_find_delim_single(void **state) {
+    char* input = "//;\n1;2";
+    char delim = find_delim(input);
+    assert_int_equal(delim, ';');
+}
+
 static void test_empty_input(void **state) {
     assert_int_equal(add(""), 0);
 }
@@ -66,6 +72,7 @@ static void test_multi_character_delimiter() {
     
 int main(int argc, char *argv[]) {
     const struct CMUnitTest tests[] = {
+        cmocka_unit_test(test_find_delim_single),
         cmocka_unit_test(test_empty_input),
         cmocka_unit_test(test_add_with_comma),
         cmocka_unit_test(test_add_with_comma_and_newline),

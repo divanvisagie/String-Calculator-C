@@ -28,10 +28,12 @@ cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=YES .
 ```sh
 make run_tests
 ```
-To pull this template with git do a shallow clone and then detach the remote
-```sh
-git clone --depth 1
-git remote rm origin
-```
-You can now use your own remote
 
+## Auto code review 
+There is a file called `review.sh` that will print the entire contents of the 
+checked in code. This can be used to pass to a command line tool like chat-gipity
+to have AI review the code.
+
+```sh
+./review.sh | cgip
+```

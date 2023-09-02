@@ -61,7 +61,8 @@ int add(char* input_ptr) {
         }
         sum += num;
     }
-
+    
+    free(tofree);
     return sum;
 }
 

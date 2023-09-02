@@ -3,9 +3,6 @@
 #include <setjmp.h>
 #include <stdint.h>
 #include <cmocka.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 
 #include "delim_parser.h"
 #include "calculator.h"
